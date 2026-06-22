@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Música • App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#121212;
+    --bg-card:#181818;
+    --bg-elevated:#282828;
+    --accent:#1DB954;
+    --accent-dark:#168f42;
+    --muted:#B3B3B3;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:#000;
+    color:#fff;
+    font-family:'Inter','Roboto',system-ui,sans-serif;
+    display:flex;
+    justify-content:center;
+  }
+  button{font-family:inherit;background:none;border:none;color:inherit;cursor:pointer;padding:0;}
+  img{display:block;}
+  .app-shell{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    background:var(--bg);
+    position:relative;
+    overflow-x:hidden;
+  }
+  .page{padding-bottom:150px;}
+  .hidden{display:none !important;}
+
+  /* ---------- Header ---------- */
+  .header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 16px 8px;
+  }
+  .header-left{display:flex;align-items:center;gap:12px;}
+  .avatar{
+    width:36px;height:36px;border-radius:999px;background:#3a3a3a;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;flex-shrink:0;
+  }
+  .avatar:hover{background:#474747;}
+  .greeting{font-size:22px;font-weight:800;letter-spacing:-0.02em;margin:0;}
+  .icon-btn{color:rgba(255,255,255,0.9);display:flex;}
+  .icon-btn:hover{color:#fff;}
+
+  /* ---------- Recently played ---------- */
+  .section{padding:16px 0 0;}
+  .section-title{font-size:20px;font-weight:800;margin:0 0 12px;padding:0 16px;}
+  .recent-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px;
+  }
+  .recent-card{
+    display:flex;align-items:center;background:rgba(40,40,40,0.6);
+    border-radius:4px;overflow:hidden;text-align:left;transition:background .15s;
+  }
+  .recent-card:hover, .recent-card.active{background:var(--bg-elevated);}
+  .recent-card img{width:56px;height:56px;object-fit:cover;flex-shrink:0;}
+  .recent-card span{
+    padding:0 8px;font-size:13px;font-weight:600;
+    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;flex:1;
+  }
+
+  /* ---------- Carousels ---------- */
+  .carousel{
+    display:flex;gap:16px;overflow-x:auto;padding:0 16px 4px;
+    scrollbar-width:none;
+  }
+  .carousel::-webkit-scrollbar{display:none;}
+  .card{flex-shrink:0;width:128px;text-align:left;}
+  .card.lg{width:144px;}
+  .card-cover-wrap{position:relative;}
+  .card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
+  .card-play{
+    position:absolute;bottom:8px;right:8px;width:36px;height:36px;border-radius:999px;
+    background:var(--accent);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 10px rgba(0,0,0,.4);opacity:0;transition:opacity .15s;
+  }
+  .card:hover .card-play, .card.active .card-play{opacity:1;}
+  .card-title{margin:8px 0 0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card.active .card-title{color:var(--accent);}
+  .card-subtitle{margin:2px 0 0;font-size:12px;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+
+  /* ---------- Player bar ---------- */
+  .player-bar{
+    position:fixed;left:8px;right:8px;bottom:64px;z-index:30;
+    max-width:464px;margin:0 auto;
+  }
+  .player-bar-inner{
+    background:rgba(40,40,40,0.95);backdrop-filter:blur(6px);
+    border-radius:6px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5);
+    cursor:pointer;
+  }
+  .player-bar-row{display:flex;align-items:center;gap:12px;padding:8px 12px;}
+  .player-bar-row img{width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0;}
+  .player-bar-meta{flex:1;min-width:0;}
+  .player-bar-meta p{margin:0;}
+  .player-bar-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .player-bar-artist{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .player-bar-row .icon-btn{padding:4px;}
+  .player-progress-track{height:2px;background:rgba(255,255,255,.2);width:100%;}
+  .player-progress-fill{height:100%;background:#fff;width:0%;}
+
+  /* ---------- Bottom nav ---------- */
+  .bottom-nav{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;
+    max-width:480px;margin:0 auto;
+    background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);
+    border-top:1px solid rgba(255,255,255,.05);
+  }
+  .bottom-nav-row{display:flex;justify-content:space-around;align-items:center;padding:8px 0;}
+  .nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 12px;color:#a3a3a3;}
+  .nav-btn.active{color:#fff;}
+  .nav-btn span{font-size:10px;}
+
+  /* ---------- Search page ---------- */
+  .search-form{
+    display:flex;align-items:center;gap:8px;background:#fff;border-radius:6px;
+    padding:10px 12px;margin:0 16px 16px;
+  }
+  .search-form input{
+    border:none;outline:none;background:transparent;color:#000;font-size:14px;width:100%;
+  }
+  .search-form input::placeholder{color:#717171;}
+  .search-status{padding:0 16px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .search-error{padding:0 16px;font-size:13px;color:#ff6b6b;}
+  .search-results{list-style:none;margin:8px 0 0;padding:0 8px;display:flex;flex-direction:column;gap:2px;}
+  .result-row{
+    display:flex;align-items:center;gap:12px;padding:8px;border-radius:4px;text-align:left;width:100%;
+    transition:background .15s;
+  }
+  .result-row:hover{background:rgba(40,40,40,.6);}
+  .result-row img{width:48px;height:48px;border-radius:4px;object-fit:cover;flex-shrink:0;}
+  .result-meta{flex:1;min-width:0;}
+  .result-title{margin:0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .result-row.active .result-title{color:var(--accent);}
+  .result-artist{margin:2px 0 0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .placeholder-page{padding:20px 16px 150px;}
+  .placeholder-page h1{font-size:22px;font-weight:800;margin:0 0 8px;}
+  .placeholder-page p{color:var(--muted);font-size:14px;margin:0;}
+
+  .spinner{
+    width:14px;height:14px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.25);border-top-color:#fff;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Now Playing / overlays ---------- */
+  .now-playing-overlay{
+    position:fixed;inset:0;z-index:50;background:var(--bg);
+    max-width:480px;margin:0 auto;overflow-y:auto;
+  }
+  .np-topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 0;}
+  .np-context{flex:1;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
+  .np-cover-wrap{padding:28px 24px 0;}
+  .np-cover{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;box-shadow:0 16px 40px rgba(0,0,0,.5);background:#222;}
+  .np-meta-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:22px 24px 0;}
+  .np-title{margin:0;font-size:21px;font-weight:800;line-height:1.25;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .np-artist{margin:6px 0 0;font-size:14px;color:var(--muted);}
+  .np-like-btn{flex-shrink:0;margin-top:4px;}
+  .np-progress-wrap{padding:18px 24px 0;}
+  .np-progress-track{height:4px;border-radius:2px;background:rgba(255,255,255,.2);cursor:pointer;}
+  .np-progress-fill{height:100%;border-radius:2px;background:#fff;width:0%;}
+  .np-time-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:7px;}
+  .np-controls-row{display:flex;align-items:center;justify-content:space-between;padding:26px 24px 0;}
+  .np-control-btn{color:#fff;}
+  .np-control-btn.accent-active{color:var(--accent);}
+  .np-play-btn{width:62px;height:62px;border-radius:999px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.4);flex-shrink:0;}
+  .np-bottom-icons{display:flex;align-items:center;justify-content:space-between;padding:26px 24px 0;color:#a3a3a3;}
+  .np-bottom-icons .right-group{display:flex;align-items:center;gap:22px;}
+  .np-artist-banner{margin:24px;background:var(--bg-elevated);border-radius:8px;padding:14px 16px;text-align:left;width:calc(100% - 48px);}
+  .np-artist-banner-title{margin:0;font-size:13px;font-weight:700;}
+  .np-artist-banner-extra{display:none;margin:6px 0 0;font-size:12px;color:var(--muted);}
+  .np-artist-banner-extra.show{display:block;}
+
+  /* ---------- Library ---------- */
+  .library-header{display:flex;align-items:center;justify-content:space-between;padding:20px 16px 14px;}
+  .library-title{margin:0;font-size:22px;font-weight:800;}
+  .liked-card{display:flex;align-items:center;gap:14px;margin:0 16px 18px;padding:14px;border-radius:6px;
+    background:linear-gradient(135deg,#4f3bbd,#1DB954);width:calc(100% - 32px);text-align:left;}
+  .liked-card:hover{filter:brightness(1.08);}
+  .liked-card-icon{width:48px;height:48px;border-radius:4px;background:rgba(0,0,0,.25);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;}
+  .liked-card-meta strong{display:block;font-size:14px;}
+  .liked-card-meta span{font-size:12px;color:rgba(255,255,255,.85);}
+  .library-list{display:flex;flex-direction:column;gap:2px;padding:0 8px 8px;}
+  .empty-hint{padding:24px 8px;color:var(--muted);font-size:13px;text-align:center;list-style:none;}
+
+  /* ---------- Account / Login / Profile ---------- */
+  .account-overlay{
+    position:fixed;inset:0;z-index:55;background:var(--bg);
+    max-width:480px;margin:0 auto;overflow-y:auto;
+  }
+  .account-topbar{display:flex;justify-content:flex-start;padding:18px 16px 0;}
+  .account-content{padding:8px 28px 48px;display:flex;flex-direction:column;align-items:center;text-align:center;}
+  .account-logo{font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--accent);margin-bottom:6px;}
+  .account-subtitle{color:var(--muted);font-size:13px;margin:0 0 26px;max-width:300px;}
+  .account-form{width:100%;display:flex;flex-direction:column;gap:14px;text-align:left;}
+  .field-label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .field-input{width:100%;background:var(--bg-elevated);border:1px solid rgba(255,255,255,.1);
+    border-radius:6px;padding:12px;color:#fff;font-size:14px;outline:none;}
+  .field-input:focus{border-color:var(--accent);}
+  .checkbox-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+  .primary-btn{background:var(--accent);color:#000;font-weight:700;border-radius:999px;
+    padding:14px;text-align:center;font-size:14px;margin-top:4px;width:100%;}
+  .primary-btn:hover{background:#1ed760;}
+  .switch-mode-text{margin-top:18px;font-size:13px;color:var(--muted);}
+  .switch-mode-text button{color:#fff;font-weight:700;text-decoration:underline;}
+  .form-error{color:#ff6b6b;font-size:12px;margin:-4px 0 0;}
+  .profile-avatar-lg{width:88px;height:88px;border-radius:999px;background:var(--bg-elevated);
+    display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;margin:8px auto 16px;}
+  .profile-name{margin:0;font-size:20px;font-weight:800;}
+  .profile-email{margin:2px 0 0;color:var(--muted);font-size:13px;}
+  .profile-stats-row{display:flex;gap:28px;margin:24px 0;}
+  .profile-stat strong{display:block;font-size:18px;}
+  .profile-stat span{font-size:11px;color:var(--muted);}
+  .logout-btn{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:999px;
+    padding:12px;font-weight:700;font-size:13px;color:#fff;margin-top:8px;background:transparent;}
+  .logout-btn:hover{border-color:rgba(255,255,255,.4);}
+
+  /* ---------- Toast ---------- */
+  .app-toast{
+    position:fixed;left:50%;bottom:140px;transform:translate(-50%,12px);
+    background:#fff;color:#000;font-size:13px;font-weight:600;
+    padding:10px 16px;border-radius:999px;box-shadow:0 8px 20px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;
+    z-index:70;max-width:80%;text-align:center;
+  }
+  .app-toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+
+<div class="app-shell" id="app-shell">
+
+  <!-- ===================== HOME ===================== -->
+  <div class="page" id="page-home">
+    <header class="header">
+      <div class="header-left">
+        <button class="avatar avatar-trigger" id="avatar-btn" aria-label="Perfil">V</button>
+        <h1 class="greeting" id="greeting-text">Bom dia, Visitante</h1>
+      </div>
+      <button class="icon-btn" aria-label="Configurações" id="settings-btn"></button>
+    </header>
+
+    <section class="section">
+      <h2 class="section-title">Tocado recentemente</h2>
+      <div class="recent-grid" id="recent-grid"></div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Feito para você</h2>
+      <div class="carousel" id="made-for-you-carousel"></div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Recomendado para você</h2>
+      <div class="carousel" id="recommended-carousel"></div>
+    </section>
+  </div>
+
+  <!-- ===================== SEARCH ===================== -->
+  <div class="page hidden" id="page-search">
+    <div style="padding:20px 16px 0;display:flex;align-items:center;justify-content:space-between;">
+      <h1 style="font-size:22px;font-weight:800;margin:0 0 16px;">Buscar</h1>
+      <button class="avatar avatar-trigger" style="width:32px;height:32px;font-size:13px;margin-bottom:16px;" aria-label="Perfil"></button>
+    </div>
+    <form class="search-form" id="search-form">
+      <span id="search-icon-slot"></span>
+      <input type="text" id="search-input" placeholder="O que você quer ouvir?" autocomplete="off" />
+    </form>
+    <div class="search-status hidden" id="search-loading">
+      <span class="spinner"></span> Buscando...
+    </div>
+    <p class="search-error hidden" id="search-error"></p>
+    <ul class="search-results" id="search-results"></ul>
+  </div>
+
+  <!-- ===================== LIBRARY ===================== -->
+  <div class="page hidden" id="page-library">
+    <div class="library-header">
+      <h1 class="library-title">Sua Biblioteca</h1>
+      <button class="avatar avatar-trigger" style="width:32px;height:32px;font-size:13px;" aria-label="Perfil"></button>
+    </div>
+    <button class="liked-card" id="liked-songs-card">
+      <div class="liked-card-icon" id="liked-card-icon-slot"></div>
+      <div class="liked-card-meta">
+        <strong>Músicas Curtidas</strong>
+        <span id="liked-count-label">0 músicas</span>
+      </div>
+    </button>
+    <div class="library-list" id="library-list"></div>
+  </div>
+
+  <!-- ===================== PREMIUM (placeholder) ===================== -->
+  <div class="page hidden" id="page-premium">
+    <div class="placeholder-page">
+      <div class="library-header" style="padding:0 0 14px;">
+        <h1 class="library-title" style="font-size:22px;">Premium</h1>
+        <button class="avatar avatar-trigger" style="width:32px;height:32px;font-size:13px;" aria-label="Perfil"></button>
+      </div>
+      <p style="color:var(--muted);font-size:14px;margin:0;">Assine para ouvir sem anúncios e com qualidade superior.</p>
+    </div>
+  </div>
+
+  <!-- ===================== PLAYER BAR ===================== -->
+  <div class="player-bar hidden" id="player-bar">
+    <div class="player-bar-inner" id="player-bar-inner">
+      <div class="player-bar-row">
+        <img id="pb-cover" src="" alt="" />
+        <div class="player-bar-meta">
+          <p class="player-bar-title" id="pb-title"></p>
+          <p class="player-bar-artist" id="pb-artist"></p>
+        </div>
+        <button class="icon-btn" aria-label="Dispositivos disponíveis" id="pb-cast"></button>
+        <button class="icon-btn" aria-label="Tocar/Pausar" id="pb-toggle"></button>
+      </div>
+      <div class="player-progress-track">
+        <div class="player-progress-fill" id="pb-progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== BOTTOM NAV ===================== -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <div class="bottom-nav-row">
+      <button class="nav-btn active" data-tab="home">
+        <span class="nav-icon" id="nav-icon-home"></span>
+        <span>Início</span>
+      </button>
+      <button class="nav-btn" data-tab="search">
+        <span class="nav-icon" id="nav-icon-search"></span>
+        <span>Buscar</span>
+      </button>
+      <button class="nav-btn" data-tab="library">
+        <span class="nav-icon" id="nav-icon-library"></span>
+        <span>Sua Biblioteca</span>
+      </button>
+      <button class="nav-btn" data-tab="premium">
+        <span class="nav-icon" id="nav-icon-premium"></span>
+        <span>Premium</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===================== NOW PLAYING (tela cheia) ===================== -->
+  <div class="now-playing-overlay hidden" id="page-now-playing">
+    <div class="np-topbar">
+      <button class="icon-btn" id="np-close" aria-label="Fechar"></button>
+      <span class="np-context" id="np-context-label"></span>
+      <button class="icon-btn" id="np-more" aria-label="Mais opções"></button>
+    </div>
+    <div class="np-cover-wrap">
+      <img class="np-cover" id="np-cover" src="" alt="" />
+    </div>
+    <div class="np-meta-row">
+      <div style="min-width:0;">
+        <p class="np-title" id="np-title"></p>
+        <p class="np-artist" id="np-artist"></p>
+      </div>
+      <button class="icon-btn np-like-btn" id="np-like" aria-label="Curtir"></button>
+    </div>
+    <div class="np-progress-wrap">
+      <div class="np-progress-track" id="np-progress-track">
+        <div class="np-progress-fill" id="np-progress-fill"></div>
+      </div>
+      <div class="np-time-row">
+        <span id="np-time-current">0:00</span>
+        <span id="np-time-remaining">-0:00</span>
+      </div>
+    </div>
+    <div class="np-controls-row">
+      <button class="icon-btn np-control-btn" id="np-shuffle" aria-label="Aleatório"></button>
+      <button class="icon-btn np-control-btn" id="np-prev" aria-label="Anterior"></button>
+      <button class="np-play-btn" id="np-play" aria-label="Tocar/Pausar"></button>
+      <button class="icon-btn np-control-btn" id="np-next" aria-label="Próxima"></button>
+      <button class="icon-btn np-control-btn" id="np-timer" aria-label="Temporizador"></button>
+    </div>
+    <div class="np-bottom-icons">
+      <button class="icon-btn" id="np-cast" aria-label="Dispositivos"></button>
+      <div class="right-group">
+        <button class="icon-btn" id="np-share" aria-label="Compartilhar"></button>
+        <button class="icon-btn" id="np-queue" aria-label="Fila"></button>
+      </div>
+    </div>
+    <button class="np-artist-banner" id="np-artist-banner">
+      <p class="np-artist-banner-title" id="np-artist-banner-title">Conheça o artista</p>
+      <p class="np-artist-banner-extra" id="np-artist-banner-extra">Mais sobre este artista em breve.</p>
+    </button>
+  </div>
+
+  <!-- ===================== MÚSICAS CURTIDAS (tela cheia) ===================== -->
+  <div class="now-playing-overlay hidden" id="page-liked" style="z-index:52;">
+    <div class="np-topbar">
+      <button class="icon-btn" id="liked-close" aria-label="Fechar"></button>
+      <span class="np-context">Músicas Curtidas</span>
+      <span style="width:24px;"></span>
+    </div>
+    <ul class="search-results" id="liked-list" style="padding:16px;"></ul>
+  </div>
+
+  <!-- ===================== CONTA: LOGIN / PERFIL ===================== -->
+  <div class="account-overlay hidden" id="page-account">
+    <div class="account-topbar">
+      <button class="icon-btn" id="account-close" aria-label="Fechar"></button>
+    </div>
+    <div class="account-content">
+
+      <div id="account-auth">
+        <div class="account-logo">♪ Música</div>
+        <p class="account-subtitle" id="auth-subtitle">Entre para curtir músicas, montar sua biblioteca e continuar de onde parou.</p>
+        <form class="account-form" id="auth-form">
+          <div id="signup-name-field" class="hidden">
+            <label class="field-label">Nome</label>
+            <input class="field-input" type="text" id="auth-name" placeholder="Como podemos te chamar?" />
+          </div>
+          <div>
+            <label class="field-label">E-mail</label>
+            <input class="field-input" type="email" id="auth-email" placeholder="seu@email.com" />
+          </div>
+          <div>
+            <label class="field-label">Senha</label>
+            <input class="field-input" type="password" id="auth-password" placeholder="••••••••" />
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="auth-show-password" /> Mostrar senha
+          </label>
+          <p class="form-error hidden" id="auth-error"></p>
+          <button type="submit" class="primary-btn" id="auth-submit">Entrar</button>
+        </form>
+        <p class="switch-mode-text" id="auth-switch-text"></p>
+      </div>
+
+      <div id="account-profile" class="hidden">
+        <div class="profile-avatar-lg" id="profile-avatar-lg"></div>
+        <p class="profile-name" id="profile-name"></p>
+        <p class="profile-email" id="profile-email"></p>
+        <div class="profile-stats-row">
+          <div class="profile-stat"><strong id="profile-liked-count">0</strong><span>Curtidas</span></div>
+          <div class="profile-stat"><strong id="profile-playlists-count">0</strong><span>Playlists</span></div>
+        </div>
+        <button class="logout-btn" id="logout-btn">Sair da conta</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== HIDDEN YOUTUBE PLAYER ===================== -->
+  <!-- IMPORTANTE: não usar display:none — o iOS não inicializa o player assim.
+       Posicionamos fora da tela com tamanho 1x1 para manter o player ativo. -->
+  <div style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;" aria-hidden="true">
+    <div id="yt-player"></div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   CONFIGURAÇÃO DA API DO YOUTUBE
+   -------------------------------------------------------------------------
+   1) Crie um projeto em https://console.cloud.google.com/ e ative a
+      "YouTube Data API v3".
+   2) Crie uma credencial do tipo "Chave de API".
+   3) Cole a chave na constante abaixo.
+   A chave só é necessária para a aba "Buscar". Os cards da Home tocam
+   direto pelo videoId fixo (mockado), sem precisar de chave.
+   NUNCA suba uma chave real em um arquivo público (HTML estático fica
+   visível para qualquer um que veja o código-fonte da página).
+   ========================================================================= */
+const YOUTUBE_API_KEY = 'AIzaSyBnu8dDceIzNOBfcwtGtFqFGx9NJqLax84';
+const YOUTUBE_SEARCH_ENDPOINT = 'https://www.googleapis.com/youtube/v3/search';
+
+/* ---------------------------- Ícones (SVG inline) ---------------------------- */
+const ICONS = {
+  settings: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`,
+  play: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>`,
+  playWhite: `<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="6,4 20,12 6,20"/></svg>`,
+  playBlack: `<svg width="22" height="22" viewBox="0 0 24 24" fill="black"><polygon points="7,4 21,12 7,20"/></svg>`,
+  pause: `<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,
+  pauseBlack: `<svg width="22" height="22" viewBox="0 0 24 24" fill="black"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,
+  cast: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h.01"/><path d="M3 13a8 8 0 0 1 8 8"/><path d="M3 8a13 13 0 0 1 13 13"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+  home: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5L12 4l8 7.5"/><path d="M6 10.5V20h5v-5h2v5h5V10.5"/></svg>`,
+  search: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.3" y2="16.3"/></svg>`,
+  searchSmall: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.3" y2="16.3"/></svg>`,
+  library: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="4" height="14"/><rect x="10" y="3" width="4" height="17"/><rect x="16" y="9" width="4" height="11"/></svg>`,
+  star: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2.5 14.9,9 22,9.7 16.7,14.4 18.3,21.4 12,17.7 5.7,21.4 7.3,14.4 2,9.7 9.1,9"/></svg>`,
+  chevronDown: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg>`,
+  moreDots: `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`,
+  shuffle: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="4" y1="20" x2="20" y2="4"/><polyline points="14,4 20,4 20,10"/><polyline points="14,20 20,20 20,14"/></svg>`,
+  timer: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V9"/><path d="M9 2h6"/></svg>`,
+  skipBack: `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="2.2" height="14"/><polygon points="20,5 20,19 8,12"/></svg>`,
+  skipForward: `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="4,5 4,19 16,12"/><rect x="17.8" y="5" width="2.2" height="14"/></svg>`,
+  queueLines: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="13" y2="18"/></svg>`,
+  share: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14V3"/><polyline points="7,8 12,3 17,8"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>`,
+  heart: (filled) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3l-1.4-1.3C5.4 14.4 2 11.3 2 7.5 2 4.4 4.4 2 7.5 2c1.7 0 3.4 0.8 4.5 2.1C13.1 2.8 14.8 2 16.5 2 19.6 2 22 4.4 22 7.5c0 3.8-3.4 6.9-8.6 11.5L12 20.3z"/></svg>`,
+};
+
+/* ---------------------------- Dados de exemplo ---------------------------- */
+/* Troque cada "videoId" por um ID real do YouTube
+   (a parte depois de "v=" na URL do vídeo) */
+const recentlyPlayed = [
+  { id:'r1', title:'Favoritos', subtitle:'Playlist', cover:'https://picsum.photos/seed/favoritos/200/200', videoId:'dQw4w9WgXcQ' },
+  { id:'r2', title:'Kid Cudi Mix', subtitle:'Mix', cover:'https://picsum.photos/seed/kidcudi/200/200', videoId:'q3dSA8jllUk' },
+  { id:'r3', title:'Hip Hop anos 90', subtitle:'Playlist', cover:'https://picsum.photos/seed/hiphop90/200/200', videoId:'GhBPLOdiZUE' },
+  { id:'r4', title:'Graves Automotivos', subtitle:'Playlist', cover:'https://picsum.photos/seed/graves/200/200', videoId:'tAGnKpE4NCI' },
+  { id:'r5', title:"Sunday Scaries - Slowed", subtitle:'UMBASA, killanoia', cover:'https://picsum.photos/seed/sundayscaries/200/200', videoId:'jfKfPfyJRdk' },
+];
+const madeForYou = [
+  { id:'m1', title:'Radar de Novidades', subtitle:'Lançamentos da semana', cover:'https://picsum.photos/seed/radar/300/300', videoId:'fJ9rUzIMcZQ' },
+  { id:'m2', title:'Daily Mix 1', subtitle:'Baseado no que você ouve', cover:'https://picsum.photos/seed/dailymix1/300/300', videoId:'OPf0YbXqDm0' },
+  { id:'m3', title:'Daily Mix 2', subtitle:'R&B, Soul e mais', cover:'https://picsum.photos/seed/dailymix2/300/300', videoId:'2Vv-BfVoq4g' },
+];
+const recommendedForYou = [
+  { id:'c1', title:'Top 50 - Brasil', subtitle:'As mais tocadas agora', cover:'https://picsum.photos/seed/top50br/320/320', videoId:'kJQP7kiw5Fk' },
+  { id:'c2', title:'Hits da Internet', subtitle:'Virais do momento', cover:'https://picsum.photos/seed/hitsinternet/320/320', videoId:'60ItHLz5WEA' },
+  { id:'c3', title:'Chill Vibes', subtitle:'Para relaxar', cover:'https://picsum.photos/seed/chillvibes/320/320', videoId:'lTRiuFIWV54' },
+];
+const libraryItems = [
+  ...recentlyPlayed.map(i => ({ ...i, type:'Playlist' })),
+  ...madeForYou.map(i => ({ ...i, type:'Mix' })),
+  ...recommendedForYou.map(i => ({ ...i, type:'Playlist' })),
+];
+
+function toTrack(item){
+  return { videoId:item.videoId, title:item.title, artist:item.subtitle, cover:item.cover };
+}
+
+/* ---------------------------- Estado global ---------------------------- */
+const state = {
+  currentTrack: null,   // { videoId, title, artist, cover }
+  isPlaying: false,
+  progress: 0,            // 0 a 1
+  duration: 0,             // segundos
+  activeTab: 'home',
+  queue: [],
+  queueIndex: -1,
+  queueContext: '',
+  shuffle: false,
+  likedSongs: {},          // videoId -> track
+  user: null,               // { name, email } | null
+  authMode: 'login',        // 'login' | 'signup'
+};
+
+let ytPlayer = null;
+let progressInterval = null;
+let lastSearchResults = [];
+let toastTimeout = null;
+
+/* ---------------------------- Helpers ---------------------------- */
+function escapeHtml(str){
+  return String(str || '').replace(/[&<>"']/g, (c) => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function formatTime(seconds){
+  if(!isFinite(seconds) || seconds < 0) seconds = 0;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function showToast(message){
+  const toast = document.getElementById('app-toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+/* ---------------------------- Render: Home ---------------------------- */
+function renderGreeting(){
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const name = state.user ? state.user.name : 'Visitante';
+  document.getElementById('greeting-text').textContent = `${greeting}, ${name}`;
+  document.querySelectorAll('.avatar-trigger').forEach(el => {
+    el.textContent = name.charAt(0).toUpperCase();
+  });
+}
+
+function renderRecentlyPlayed(){
+  const grid = document.getElementById('recent-grid');
+  const queue = recentlyPlayed.map(toTrack);
+  grid.innerHTML = recentlyPlayed.map(item => `
+    <button class="recent-card" data-id="${item.id}" data-video-id="${item.videoId}">
+      <img src="${item.cover}" alt="${escapeHtml(item.title)}" />
+      <span>${escapeHtml(item.title)}</span>
+    </button>
+  `).join('');
+  grid.querySelectorAll('.recent-card').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = recentlyPlayed.find(i => i.id === btn.dataset.id);
+      playTrack(toTrack(item), queue, 'Tocado recentemente');
+    });
+  });
+}
+
+function renderCarousel(containerId, items, size, contextLabel){
+  const el = document.getElementById(containerId);
+  const queue = items.map(toTrack);
+  el.innerHTML = items.map(item => `
+    <button class="card ${size === 'lg' ? 'lg' : ''}" data-id="${item.id}" data-video-id="${item.videoId}">
+      <div class="card-cover-wrap">
+        <img src="${item.cover}" alt="${escapeHtml(item.title)}" />
+        <div class="card-play">${ICONS.playBlack}</div>
+      </div>
+      <p class="card-title">${escapeHtml(item.title)}</p>
+      <p class="card-subtitle">${escapeHtml(item.subtitle)}</p>
+    </button>
+  `).join('');
+  el.querySelectorAll('.card').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = items.find(i => i.id === btn.dataset.id);
+      playTrack(toTrack(item), queue, contextLabel);
+    });
+  });
+  syncActiveCards();
+}
+
+function syncActiveCards(){
+  const currentId = state.currentTrack ? state.currentTrack.videoId : null;
+  document.querySelectorAll('.card, .recent-card').forEach(btn => {
+    btn.classList.toggle('active', !!currentId && btn.dataset.videoId === currentId);
+  });
+  document.querySelectorAll('.result-row[data-video-id]').forEach(row => {
+    row.classList.toggle('active', !!currentId && row.dataset.videoId === currentId);
+  });
+}
+
+/* ---------------------------- Render: Player bar ---------------------------- */
+function renderPlayerBar(){
+  const bar = document.getElementById('player-bar');
+  if(!state.currentTrack){
+    bar.classList.add('hidden');
+    return;
+  }
+  bar.classList.remove('hidden');
+  document.getElementById('pb-cover').src = state.currentTrack.cover || '';
+  document.getElementById('pb-title').textContent = state.currentTrack.title || '';
+  document.getElementById('pb-artist').textContent = state.currentTrack.artist || '';
+  document.getElementById('pb-toggle').innerHTML = state.isPlaying ? ICONS.pause : ICONS.playWhite;
+  document.getElementById('pb-progress').style.width = `${Math.min(state.progress * 100, 100)}%`;
+}
+
+/* ---------------------------- Render: Now Playing (tela cheia) ---------------------------- */
+function renderNowPlaying(){
+  if(!state.currentTrack) return;
+  document.getElementById('np-cover').src = state.currentTrack.cover || '';
+  document.getElementById('np-cover').alt = state.currentTrack.title || '';
+  document.getElementById('np-title').textContent = state.currentTrack.title || '';
+  document.getElementById('np-artist').textContent = state.currentTrack.artist || '';
+  document.getElementById('np-context-label').textContent = state.queueContext || 'Tocando agora';
+
+  const liked = isLiked(state.currentTrack.videoId);
+  const likeBtn = document.getElementById('np-like');
+  likeBtn.innerHTML = ICONS.heart(liked);
+  likeBtn.style.color = liked ? 'var(--accent)' : '#fff';
+
+  document.getElementById('np-play').innerHTML = state.isPlaying ? ICONS.pauseBlack : ICONS.playBlack;
+
+  const pct = Math.min(state.progress * 100, 100);
+  document.getElementById('np-progress-fill').style.width = `${pct}%`;
+  const current = state.progress * (state.duration || 0);
+  const remaining = (state.duration || 0) - current;
+  document.getElementById('np-time-current').textContent = formatTime(current);
+  document.getElementById('np-time-remaining').textContent = `-${formatTime(remaining)}`;
+
+  document.getElementById('np-shuffle').classList.toggle('accent-active', state.shuffle);
+
+  const firstArtist = state.currentTrack.artist ? state.currentTrack.artist.split(',')[0].trim() : 'o artista';
+  document.getElementById('np-artist-banner-title').textContent = `Conheça ${firstArtist}`;
+}
+
+/* ---------------------------- Render: Biblioteca ---------------------------- */
+function renderLikedCount(){
+  const count = Object.keys(state.likedSongs).length;
+  document.getElementById('liked-count-label').textContent = `${count} música${count === 1 ? '' : 's'}`;
+  const profCount = document.getElementById('profile-liked-count');
+  if(profCount) profCount.textContent = count;
+}
+
+function renderLibrary(){
+  renderLikedCount();
+  const list = document.getElementById('library-list');
+  const tracks = libraryItems.map(toTrack);
+  list.innerHTML = libraryItems.map((item, idx) => `
+    <button class="result-row" data-index="${idx}" data-video-id="${item.videoId}">
+      <img src="${item.cover}" alt="${escapeHtml(item.title)}" />
+      <div class="result-meta">
+        <p class="result-title">${escapeHtml(item.title)}</p>
+        <p class="result-artist">${escapeHtml(item.type)} • ${escapeHtml(item.subtitle)}</p>
+      </div>
+    </button>
+  `).join('');
+  list.querySelectorAll('.result-row').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index, 10);
+      playTrack(tracks[idx], tracks, 'Sua Biblioteca', true);
+    });
+  });
+  syncActiveCards();
+}
+
+function renderLikedList(){
+  const list = document.getElementById('liked-list');
+  const tracks = Object.values(state.likedSongs);
+  if(!tracks.length){
+    list.innerHTML = `<li class="empty-hint">Toque no coração de uma música para curtir — ela aparece aqui.</li>`;
+    return;
+  }
+  list.innerHTML = tracks.map((track, idx) => `
+    <li>
+      <button class="result-row" data-index="${idx}" data-video-id="${track.videoId}">
+        <img src="${track.cover}" alt="${escapeHtml(track.title)}" />
+        <div class="result-meta">
+          <p class="result-title">${escapeHtml(track.title)}</p>
+          <p class="result-artist">${escapeHtml(track.artist)}</p>
+        </div>
+        ${ICONS.heart(true)}
+      </button>
+    </li>
+  `).join('');
+  list.querySelectorAll('.result-row').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index, 10);
+      playTrack(tracks[idx], tracks, 'Músicas Curtidas', true);
+    });
+  });
+  syncActiveCards();
+}
+
+/* ---------------------------- Navegação por abas ---------------------------- */
+function switchTab(tab){
+  state.activeTab = tab;
+  ['home','search','library','premium'].forEach(t => {
+    document.getElementById(`page-${t}`).classList.toggle('hidden', t !== tab);
+  });
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  if(tab === 'library') renderLibrary();
+}
+
+/* ---------------------------- Player do YouTube (oculto) ---------------------------- */
+function loadYouTubeIframeAPI(){
+  return new Promise((resolve) => {
+    if(window.YT && window.YT.Player){ resolve(window.YT); return; }
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.body.appendChild(tag);
+    window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+  });
+}
+
+function initYouTubePlayer(){
+  loadYouTubeIframeAPI().then((YT) => {
+    ytPlayer = new YT.Player('yt-player', {
+      height:'1', width:'1',
+      playerVars:{
+        autoplay: 1,
+        controls: 0,
+        disablekb: 1,
+        playsinline: 1,   // iOS: toca inline, sem abrir tela cheia
+        fs: 0,
+        rel: 0,
+        iv_load_policy: 3,
+        modestbranding: 1,
+      },
+      events:{
+        onReady: () => {},
+        onStateChange: (event) => {
+          if(event.data === 1){ // tocando
+            state.isPlaying = true;
+            startProgressTracking();
+          } else if(event.data === 2){ // pausado
+            state.isPlaying = false;
+            stopProgressTracking();
+          } else if(event.data === 0){ // terminou
+            stopProgressTracking();
+            if(state.queue.length > 1){
+              nextTrack();
+              return;
+            }
+            state.isPlaying = false;
+            state.progress = 0;
+          }
+          renderPlayerBar();
+          renderNowPlaying();
+        }
+      }
+    });
+  });
+}
+
+function startProgressTracking(){
+  stopProgressTracking();
+  progressInterval = setInterval(() => {
+    if(ytPlayer && ytPlayer.getCurrentTime){
+      const current = ytPlayer.getCurrentTime();
+      const total = ytPlayer.getDuration();
+      state.duration = total || 0;
+      if(total > 0) state.progress = current / total;
+      renderPlayerBar();
+      renderNowPlaying();
+    }
+  }, 500);
+}
+
+function stopProgressTracking(){
+  if(progressInterval) clearInterval(progressInterval);
+}
+
+/* ---------------------------- Reprodução / fila ---------------------------- */
+function buildContextQueue(queueArr, track){
+  const exists = queueArr.some(t => t.videoId === track.videoId);
+  return exists ? queueArr : [track, ...queueArr];
+}
+
+function playTrack(track, queueArr, contextLabel, openFullScreen){
+  const queue = queueArr && queueArr.length ? buildContextQueue(queueArr, track) : [track];
+  state.queue = queue;
+  state.queueIndex = queue.findIndex(t => t.videoId === track.videoId);
+  state.queueContext = contextLabel || '';
+  state.currentTrack = track;
+  state.isPlaying = true;
+  state.progress = 0;
+  state.duration = 0;
+  renderPlayerBar();
+  renderNowPlaying();
+  syncActiveCards();
+  if(ytPlayer && ytPlayer.loadVideoById){
+    ytPlayer.loadVideoById({ videoId: track.videoId, startSeconds: 0 });
+    setTimeout(() => {
+      if(ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+    }, 300);
+  }
+  if(openFullScreen) openNowPlaying();
+}
+
+function playQueueIndex(index){
+  if(index < 0 || index >= state.queue.length) return;
+  const track = state.queue[index];
+  state.queueIndex = index;
+  state.currentTrack = track;
+  state.isPlaying = true;
+  state.progress = 0;
+  state.duration = 0;
+  renderPlayerBar();
+  renderNowPlaying();
+  syncActiveCards();
+  if(ytPlayer && ytPlayer.loadVideoById){
+    ytPlayer.loadVideoById({ videoId: track.videoId, startSeconds: 0 });
+    setTimeout(() => {
+      if(ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+    }, 300);
+  }
+}
+
+function nextTrack(){
+  if(!state.queue.length) return;
+  let nextIndex;
+  if(state.shuffle && state.queue.length > 1){
+    do { nextIndex = Math.floor(Math.random() * state.queue.length); }
+    while(nextIndex === state.queueIndex);
+  } else {
+    nextIndex = (state.queueIndex + 1) % state.queue.length;
+  }
+  playQueueIndex(nextIndex);
+}
+
+function prevTrack(){
+  if(!state.queue.length) return;
+  const elapsed = state.progress * state.duration;
+  if(elapsed > 3){
+    if(ytPlayer && ytPlayer.seekTo) ytPlayer.seekTo(0, true);
+    state.progress = 0;
+    renderPlayerBar();
+    renderNowPlaying();
+    return;
+  }
+  const prevIndex = (state.queueIndex - 1 + state.queue.length) % state.queue.length;
+  playQueueIndex(prevIndex);
+}
+
+function toggleShuffle(){
+  state.shuffle = !state.shuffle;
+  renderNowPlaying();
+  showToast(state.shuffle ? 'Modo aleatório ativado' : 'Modo aleatório desativado');
+}
+
+function togglePlay(){
+  if(!ytPlayer || !state.currentTrack) return;
+  if(state.isPlaying){
+    ytPlayer.pauseVideo();
+  } else {
+    ytPlayer.playVideo();
+  }
+}
+
+function seekFromTrack(e){
+  if(!ytPlayer || !state.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const fraction = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+  ytPlayer.seekTo(fraction * state.duration, true);
+  state.progress = fraction;
+  renderPlayerBar();
+  renderNowPlaying();
+}
+
+/* ---------------------------- Curtidas ---------------------------- */
+function isLiked(videoId){
+  return !!state.likedSongs[videoId];
+}
+
+function toggleLike(track){
+  if(!track) return;
+  if(state.likedSongs[track.videoId]){
+    delete state.likedSongs[track.videoId];
+    showToast('Removida das Músicas Curtidas');
+  } else {
+    state.likedSongs[track.videoId] = track;
+    showToast('Adicionada às Músicas Curtidas');
+  }
+  renderLikedCount();
+  renderNowPlaying();
+  renderLikedList();
+  syncActiveCards();
+}
+
+/* ---------------------------- Overlays: Now Playing / Curtidas ---------------------------- */
+function openNowPlaying(){
+  if(!state.currentTrack) return;
+  document.getElementById('page-now-playing').classList.remove('hidden');
+  document.getElementById('bottom-nav').classList.add('hidden');
+  document.getElementById('player-bar').classList.add('hidden');
+  renderNowPlaying();
+}
+function closeNowPlaying(){
+  document.getElementById('page-now-playing').classList.add('hidden');
+  document.getElementById('bottom-nav').classList.remove('hidden');
+  renderPlayerBar();
+}
+function openLikedView(){
+  renderLikedList();
+  document.getElementById('page-liked').classList.remove('hidden');
+  document.getElementById('bottom-nav').classList.add('hidden');
+}
+function closeLikedView(){
+  document.getElementById('page-liked').classList.add('hidden');
+  document.getElementById('bottom-nav').classList.remove('hidden');
+}
+
+/* ---------------------------- Conta: login / cadastro / perfil ---------------------------- */
+function openAccount(){
+  document.getElementById('page-account').classList.remove('hidden');
+  document.getElementById('bottom-nav').classList.add('hidden');
+  renderAccountPanel();
+}
+function closeAccount(){
+  document.getElementById('page-account').classList.add('hidden');
+  document.getElementById('bottom-nav').classList.remove('hidden');
+}
+
+function renderAccountPanel(){
+  const authView = document.getElementById('account-auth');
+  const profileView = document.getElementById('account-profile');
+  if(state.user){
+    authView.classList.add('hidden');
+    profileView.classList.remove('hidden');
+    document.getElementById('profile-avatar-lg').textContent = state.user.name.charAt(0).toUpperCase();
+    document.getElementById('profile-name').textContent = state.user.name;
+    document.getElementById('profile-email').textContent = state.user.email;
+    document.getElementById('profile-liked-count').textContent = Object.keys(state.likedSongs).length;
+    document.getElementById('profile-playlists-count').textContent = libraryItems.length;
+  } else {
+    authView.classList.remove('hidden');
+    profileView.classList.add('hidden');
+    updateAuthFormMode();
+  }
+}
+
+function updateAuthFormMode(){
+  const isSignup = state.authMode === 'signup';
+  document.getElementById('signup-name-field').classList.toggle('hidden', !isSignup);
+  document.getElementById('auth-subtitle').textContent = isSignup
+    ? 'Crie sua conta para curtir músicas e montar sua biblioteca.'
+    : 'Entre para curtir músicas, montar sua biblioteca e continuar de onde parou.';
+  document.getElementById('auth-submit').textContent = isSignup ? 'Criar conta' : 'Entrar';
+
+  const switchText = document.getElementById('auth-switch-text');
+  switchText.innerHTML = isSignup
+    ? 'Já tem conta? <button type="button" id="auth-switch-btn">Entrar</button>'
+    : 'Não tem conta? <button type="button" id="auth-switch-btn">Criar conta</button>';
+  document.getElementById('auth-switch-btn').addEventListener('click', () => {
+    state.authMode = isSignup ? 'login' : 'signup';
+    updateAuthFormMode();
+  });
+
+  document.getElementById('auth-error').classList.add('hidden');
+}
+
+function handleAuthSubmit(e){
+  e.preventDefault();
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errorEl = document.getElementById('auth-error');
+  errorEl.classList.add('hidden');
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailRegex.test(email)){
+    errorEl.textContent = 'Digite um e-mail válido.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  if(password.length < 4){
+    errorEl.textContent = 'A senha precisa ter pelo menos 4 caracteres.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  let name;
+  if(state.authMode === 'signup'){
+    name = document.getElementById('auth-name').value.trim();
+    if(!name){
+      errorEl.textContent = 'Conte seu nome para criar a conta.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+  } else {
+    const localPart = email.split('@')[0];
+    name = localPart.charAt(0).toUpperCase() + localPart.slice(1);
+  }
+
+  state.user = { name, email };
+  renderGreeting();
+  renderAccountPanel();
+  closeAccount();
+  showToast(`Bem-vindo, ${name}!`);
+}
+
+function handleLogout(){
+  state.user = null;
+  state.authMode = 'login';
+  renderGreeting();
+  renderAccountPanel();
+  showToast('Você saiu da conta');
+}
+
+/* ---------------------------- Busca via JSONP (bypassa CORS no Safari/file://) ---------------------------- */
+function jsonpSearch(query){
+  return new Promise((resolve, reject) => {
+    const callbackName = '__ytSearch_' + Date.now();
+    const script = document.createElement('script');
+    const params = new URLSearchParams({
+      part: 'snippet',
+      q: query,
+      type: 'video',
+      maxResults: '15',
+      key: YOUTUBE_API_KEY,
+      callback: callbackName,
+    });
+    script.src = `${YOUTUBE_SEARCH_ENDPOINT}?${params.toString()}`;
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('Falha ao conectar à API do YouTube.'));
+    };
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Tempo limite da busca esgotado.'));
+    }, 8000);
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[callbackName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[callbackName] = (data) => {
+      cleanup();
+      if(data.error) reject(new Error(data.error.message || 'Erro da API'));
+      else resolve(data);
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function handleSearch(e){
+  e.preventDefault();
+  const query = document.getElementById('search-input').value.trim();
+  const loadingEl = document.getElementById('search-loading');
+  const errorEl = document.getElementById('search-error');
+  const resultsEl = document.getElementById('search-results');
+
+  errorEl.classList.add('hidden');
+  resultsEl.innerHTML = '';
+  if(!query) return;
+
+  if(!YOUTUBE_API_KEY || YOUTUBE_API_KEY === 'COLE_SUA_YOUTUBE_API_KEY_AQUI'){
+    errorEl.textContent = 'Adicione sua YOUTUBE_API_KEY no arquivo para habilitar a busca.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  loadingEl.classList.remove('hidden');
+
+  try{
+    const data = await jsonpSearch(query);
+    const items = (data.items || []).map(item => ({
+      videoId: item.id.videoId,
+      title: item.snippet.title,
+      artist: item.snippet.channelTitle,
+      cover: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+    }));
+    if(items.length === 0){
+      errorEl.textContent = 'Nenhum resultado encontrado. Tente outro termo.';
+      errorEl.classList.remove('hidden');
+    } else {
+      renderSearchResults(items);
+    }
+  } catch(err){
+    errorEl.textContent = `Erro: ${err.message}`;
+    errorEl.classList.remove('hidden');
+  } finally {
+    loadingEl.classList.add('hidden');
+  }
+}
+
+function renderSearchResults(items){
+  lastSearchResults = items;
+  const resultsEl = document.getElementById('search-results');
+  resultsEl.innerHTML = items.map((item, idx) => `
+    <li>
+      <button class="result-row" data-index="${idx}" data-video-id="${item.videoId}">
+        <img src="${item.cover}" alt="${escapeHtml(item.title)}" />
+        <div class="result-meta">
+          <p class="result-title">${escapeHtml(item.title)}</p>
+          <p class="result-artist">${escapeHtml(item.artist)}</p>
+        </div>
+        ${ICONS.play}
+      </button>
+    </li>
+  `).join('');
+  resultsEl.querySelectorAll('.result-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = parseInt(row.dataset.index, 10);
+      playTrack(lastSearchResults[idx], lastSearchResults, 'Resultados da busca', true);
+    });
+  });
+  syncActiveCards();
+}
+
+/* ---------------------------- Compartilhar ---------------------------- */
+function handleShare(){
+  if(!state.currentTrack) return;
+  if(navigator.share){
+    navigator.share({
+      title: state.currentTrack.title,
+      text: `${state.currentTrack.title} — ${state.currentTrack.artist}`,
+    }).catch(() => {});
+  } else {
+    showToast('Compartilhamento não disponível neste navegador.');
+  }
+}
+
+/* ---------------------------- Inicialização ---------------------------- */
+function init(){
+  // Toast container
+  const toast = document.createElement('div');
+  toast.id = 'app-toast';
+  toast.className = 'app-toast';
+  document.getElementById('app-shell').appendChild(toast);
+
+  // Ícones estáticos
+  document.getElementById('settings-btn').innerHTML = ICONS.settings;
+  document.getElementById('search-icon-slot').innerHTML = ICONS.searchSmall;
+  document.getElementById('pb-cast').innerHTML = ICONS.cast;
+  document.getElementById('nav-icon-home').innerHTML = ICONS.home;
+  document.getElementById('nav-icon-search').innerHTML = ICONS.search;
+  document.getElementById('nav-icon-library').innerHTML = ICONS.library;
+  document.getElementById('nav-icon-premium').innerHTML = ICONS.star;
+  document.getElementById('liked-card-icon-slot').innerHTML = ICONS.heart(true);
+
+  document.getElementById('np-close').innerHTML = ICONS.chevronDown;
+  document.getElementById('np-more').innerHTML = ICONS.moreDots;
+  document.getElementById('np-shuffle').innerHTML = ICONS.shuffle;
+  document.getElementById('np-prev').innerHTML = ICONS.skipBack;
+  document.getElementById('np-play').innerHTML = ICONS.playBlack;
+  document.getElementById('np-next').innerHTML = ICONS.skipForward;
+  document.getElementById('np-timer').innerHTML = ICONS.timer;
+  document.getElementById('np-cast').innerHTML = ICONS.cast;
+  document.getElementById('np-share').innerHTML = ICONS.share;
+  document.getElementById('np-queue').innerHTML = ICONS.queueLines;
+  document.getElementById('np-like').innerHTML = ICONS.heart(false);
+
+  document.getElementById('liked-close').innerHTML = ICONS.chevronDown;
+  document.getElementById('account-close').innerHTML = ICONS.chevronDown;
+
+  // Conteúdo inicial
+  renderGreeting();
+  renderRecentlyPlayed();
+  renderCarousel('made-for-you-carousel', madeForYou, 'md', 'Feito para você');
+  renderCarousel('recommended-carousel', recommendedForYou, 'lg', 'Recomendado para você');
+  renderLibrary();
+
+  // Player bar
+  document.getElementById('player-bar-inner').addEventListener('click', () => openNowPlaying());
+  document.getElementById('pb-toggle').addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
+  document.getElementById('pb-cast').addEventListener('click', (e) => { e.stopPropagation(); showToast('Nenhum dispositivo disponível no momento.'); });
+
+  // Busca
+  document.getElementById('search-form').addEventListener('submit', handleSearch);
+
+  // Navegação inferior
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // Biblioteca
+  document.getElementById('liked-songs-card').addEventListener('click', openLikedView);
+  document.getElementById('liked-close').addEventListener('click', closeLikedView);
+
+  // Now Playing (tela cheia)
+  document.getElementById('np-close').addEventListener('click', closeNowPlaying);
+  document.getElementById('np-more').addEventListener('click', () => showToast('Mais opções em breve.'));
+  document.getElementById('np-play').addEventListener('click', togglePlay);
+  document.getElementById('np-prev').addEventListener('click', prevTrack);
+  document.getElementById('np-next').addEventListener('click', nextTrack);
+  document.getElementById('np-shuffle').addEventListener('click', toggleShuffle);
+  document.getElementById('np-like').addEventListener('click', () => toggleLike(state.currentTrack));
+  document.getElementById('np-cast').addEventListener('click', () => showToast('Nenhum dispositivo disponível no momento.'));
+  document.getElementById('np-share').addEventListener('click', handleShare);
+  document.getElementById('np-queue').addEventListener('click', () => showToast('Tela de fila em breve.'));
+  document.getElementById('np-timer').addEventListener('click', () => showToast('Temporizador de soneca em breve.'));
+  document.getElementById('np-progress-track').addEventListener('click', seekFromTrack);
+  document.getElementById('np-artist-banner').addEventListener('click', () => {
+    document.getElementById('np-artist-banner-extra').classList.toggle('show');
+  });
+
+  // Conta: avatar (em qualquer aba) abre login (deslogado) ou perfil (logado)
+  document.querySelectorAll('.avatar-trigger').forEach(btn => {
+    btn.addEventListener('click', openAccount);
+  });
+  document.getElementById('account-close').addEventListener('click', closeAccount);
+  document.getElementById('auth-form').addEventListener('submit', handleAuthSubmit);
+  document.getElementById('logout-btn').addEventListener('click', handleLogout);
+  document.getElementById('auth-show-password').addEventListener('change', (e) => {
+    document.getElementById('auth-password').type = e.target.checked ? 'text' : 'password';
+  });
+
+  initYouTubePlayer();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
